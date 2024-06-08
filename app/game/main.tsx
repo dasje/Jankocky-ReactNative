@@ -1,7 +1,6 @@
 import { getObject } from "@/components/DataStore";
 import { PlayerState } from "@/constants/GameContext";
 import { Link } from "expo-router";
-import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
 import Dice from "react-dice-roll";
 import { View, Text, StyleSheet, Button } from "react-native";
