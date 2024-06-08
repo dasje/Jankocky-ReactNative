@@ -1,70 +1,80 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { getObject, storeObject, storeValue } from "@/components/DataStore";
+import { DieState, PlayerState } from "@/constants/GameContext";
+import { Link } from "expo-router";
+import React, { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  GestureResponderEvent,
+} from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import { FlatList, TextInput } from "react-native-gesture-handler";
 
-export default function HomeScreen() {
+export default function HomeTab() {
+  const [listOfPlayers, setListOfPlayers] = useState<PlayerState[]>([]);
+
+  const [newPlayerInput, setNewPlayerInput] = useState<string>("");
+  const [addPlayer, setAddPlayer] = useState<boolean>(false);
+
+  const createPlayer = () => {
+    const newPlayerDice: DieState[] = [];
+    for (var i = 0; i < 6; i++) {
+      const di: DieState = { value: i + 1, held: false };
+      newPlayerDice.push(di);
+    }
+    const newPlayer: PlayerState = {
+      playerName: newPlayerInput,
+      scoreHistory: [],
+      diceSet: newPlayerDice,
+    };
+    var newPlayerList = [...listOfPlayers!, newPlayer];
+    setListOfPlayers(newPlayerList);
+  };
+
+  const addPlayerToList = async (e: GestureResponderEvent) => {
+    e.preventDefault();
+    setAddPlayer(!addPlayer);
+  };
+
+  useEffect(() => {
+    if (listOfPlayers!.length < 6 && newPlayerInput.length > 0 && addPlayer) {
+      createPlayer();
+      setNewPlayerInput("");
+      setAddPlayer(!addPlayer);
+    }
+  }, [addPlayerToList]);
+
+  const savePlayerList = async () => {
+    await storeObject("currentPlayerSet", listOfPlayers);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.container}>
+      <Text>Tab [Home]</Text>
+      <Text>Add players</Text>
+      <TextInput value={newPlayerInput} onChangeText={setNewPlayerInput} />
+      <Button title="Add a player" onPress={addPlayerToList} />
+      {listOfPlayers.length > 0 ? (
+        <FlatList
+          data={listOfPlayers}
+          renderItem={({ item }) => <Text>{item.playerName}</Text>}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      ) : (
+        <View />
+      )}
+      <Link href="/game/main">
+        <Button title="Play!" onPress={savePlayerList} />
+      </Link>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  container: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });
